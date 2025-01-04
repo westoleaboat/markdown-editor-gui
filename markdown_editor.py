@@ -61,6 +61,14 @@ class MainWindow(qtw.QMainWindow):
         ######################
         self.textedit = qtw.QTextEdit() # for more complex app can use Qwidget obj
         self.setCentralWidget(self.textedit)
+        
+        # Set the size of the main window
+        self.setGeometry(100, 100, 800, 600)  # Position (100, 100) with a size of 800x600
+        # Or use resize if you don't care about the position
+        # self.resize(800, 600)
+        # self.setMinimumSize(400, 300)
+        # self.setMaximumSize(1200, 800)
+
         self.setWindowTitle('Markdown Editor')
         #################
         # The Statusbar #
