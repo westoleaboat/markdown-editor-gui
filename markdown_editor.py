@@ -84,6 +84,14 @@ class MainWindow(qtw.QMainWindow):
                 str(len(self.textedit.toPlainText()))
                 )
             )
+        
+        self.toggle_md_btn = qtw.QPushButton(f"MarkDown Off", self, checkable=True, checked=False)#, shortcut=qtg.QKeySequence('Ctrl+Tab'))
+        self.toggle_md_btn.clicked.connect(self.showMarkdown)
+
+        self.md_shortcut = qtw.QShortcut(qtg.QKeySequence("Ctrl+Tab"), self)
+        self.md_shortcut.activated.connect(self.showMarkdown)
+        
+        self.statusBar().addPermanentWidget(self.toggle_md_btn)
         self.statusBar().addPermanentWidget(charcount_label)
 
         ###############
@@ -163,7 +171,7 @@ class MainWindow(qtw.QMainWindow):
         toolbar.addAction(
             md_icon,
             'Toggle Markdown',
-            lambda: self.showMarkdown()
+            lambda: self.showMarkdown(),
         )
 
         ################
@@ -296,21 +304,26 @@ class MainWindow(qtw.QMainWindow):
 
         if self.markdown_enabled:
             # Switch to raw text (markdown off)
-
+            
             self.textedit.setReadOnly(False)
             self.textedit.setPlainText(self.raw_text)
             self.statusBar().showMessage('Markdown Off')
+            self.toggle_md_btn.setChecked(False)
+            self.toggle_md_btn.setText("MarkDown Off")
         else:
             self.textedit.setReadOnly(True)
             # Store the raw markdown text and switch to markdown view (markdown on)
             self.raw_text = self.textedit.toPlainText()  # Save the raw text before converting
             self.textedit.setMarkdown(self.raw_text)
+            self.toggle_md_btn.setText("MarkDown On")
+            self.toggle_md_btn.setChecked(True)
 
 
             self.statusBar().showMessage('Markdown On')
 
         # Toggle the state
         self.markdown_enabled = not self.markdown_enabled
+        
 
     def show_settings(self):
 
