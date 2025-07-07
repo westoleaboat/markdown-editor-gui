@@ -38,6 +38,15 @@ class SettingsDialog(qtw.QDialog):
         print(self.settings.value('show_warnings'))
         super().accept()
 
+# creating VLine class
+class VLine(qtw.QFrame):
+
+    # a simple Vertical line
+    def __init__(self):
+
+        super(VLine, self).__init__()
+        self.setFrameShape(self.VLine|self.Sunken)
+
 class MainWindow(qtw.QMainWindow):
 
     settings = qtc.QSettings('PyQtEditor', 'markdown editor')
@@ -78,20 +87,27 @@ class MainWindow(qtw.QMainWindow):
 
         # add widgets to statusbar
         charcount_label = qtw.QLabel("chars: 0")
+        # charcount_label.setStyleSheet("border :2px solid grey;")
         self.textedit.textChanged.connect(
             lambda: charcount_label.setText(
                 "chars: " +
                 str(len(self.textedit.toPlainText()))
                 )
             )
+
+        self.file_name_label = qtw.QLabel("no file open")
+        self.current_file = None
         
-        self.toggle_md_btn = qtw.QPushButton(f"MarkDown Off", self, checkable=True, checked=False)#, shortcut=qtg.QKeySequence('Ctrl+Tab'))
+        self.toggle_md_btn = qtw.QPushButton(f"MarkDown Off", self, checkable=True, checked=False) # extra toggle markdown button (not used)
         self.toggle_md_btn.clicked.connect(self.showMarkdown)
 
-        self.md_shortcut = qtw.QShortcut(qtg.QKeySequence("Ctrl+Tab"), self)
+        self.md_shortcut = qtw.QShortcut(qtg.QKeySequence("Ctrl+Tab"), self) # add shortcut directly instead of specific button because widget loses focus
         self.md_shortcut.activated.connect(self.showMarkdown)
         
-        self.statusBar().addPermanentWidget(self.toggle_md_btn)
+        # self.statusBar().addPermanentWidget(self.toggle_md_btn) # since shortcut is added directly no need for extra toggle markdown button
+        self.statusBar().addPermanentWidget(self.file_name_label)
+        # adding VLine object
+        self.statusBar().addPermanentWidget(VLine())
         self.statusBar().addPermanentWidget(charcount_label)
 
         ###############
@@ -257,10 +273,48 @@ class MainWindow(qtw.QMainWindow):
         s_text = self.search_text_inp.text()
         r_text = self.replace_text_inp.text()
 
-        if s_text:
+        # Clear any previous highlights
+        self.clear_highlights()
+
+        if s_text and r_text:
             self.textedit.setText(
                 self.textedit.toPlainText().replace(s_text, r_text)
                 )
+
+        elif s_text and not r_text:
+            # Highlight found text
+            cursor = self.textedit.textCursor()
+            document = self.textedit.document()
+
+            #Format for highlight
+            highlight_format = qtg.QTextCharFormat()
+            highlight_format.setBackground(qtg.QColor("yellow"))
+
+            # Reset cursor to start
+            cursor.setPosition(0)
+            self.textedit.setTextCursor(cursor)
+
+            while True:
+                cursor = document.find(s_text, cursor)
+                if cursor.isNull():
+                    break
+                # Apply highlight
+                cursor.mergeCharFormat(highlight_format)
+        
+    def clear_highlights(self):
+        cursor = self.textedit.textCursor()
+        cursor.beginEditBlock()
+
+        # Select all text
+        cursor.select(qtg.QTextCursor.Document)
+
+        # Clear format
+        clear_format = qtg.QTextCharFormat()
+        clear_format.setBackground(qtg.QColor("transparent"))
+
+        cursor.mergeCharFormat(clear_format)
+        cursor.endEditBlock()
+
     
     def showAboutDialog(self):
         qtw.QMessageBox.about(
@@ -273,16 +327,22 @@ class MainWindow(qtw.QMainWindow):
         filename, _ = qtw.QFileDialog.getOpenFileName(
             self,
             "Select a text file to open…",
-            qtc.QDir.homePath(),
-            'Text Files (*.txt) ;;Python Files (*.py) ;;All Files (*)',
-            'Python Files (*.py)',
+            # qtc.QDir.homePath(),
+            "/home/wings/Desktop/criptoarica/recursos_md",
+            'Text Files (*.txt) ;;Python Files (*.py) ;;All Files (*) ;;Markdown Files (*.md)',
+            'Markdown Files (*.md)',
             qtw.QFileDialog.DontUseNativeDialog |
             qtw.QFileDialog.DontResolveSymlinks
         )
         if filename:
             try:
                 with open(filename, 'r') as fh:
+                    self.markdown_enabled = False
                     self.textedit.setText(fh.read())
+                    self.statusBar().showMessage(f"Open File {filename}")
+
+                    file_name = qtc.QFileInfo(filename).fileName()
+                    self.file_name_label.setText(f"{file_name}")
             except Exception as e:
                 qtw.QMessageBox.critical(self, f"Could not load file: {e}")
 
@@ -290,13 +350,18 @@ class MainWindow(qtw.QMainWindow):
         filename, _ = qtw.QFileDialog.getSaveFileName(
             self,
             "Select the file to save to…",
-            qtc.QDir.homePath(),
-            'Text Files (*.txt) ;;Python Files (*.py) ;;All Files (*)'
+            # qtc.QDir.homePath(),
+            "/home/wings/Desktop/criptoarica/recursos_md",
+            'Text Files (*.txt) ;;Python Files (*.py) ;;All Files (*) ;;Markdown Files (*.md)',
+            'Markdown Files (*.md)'
         )
         if filename:
             try:
                 with open(filename, 'w') as fh:
                     fh.write(self.textedit.toPlainText())
+                    self.statusBar().showMessage(f"File saved as {filename}")
+                    file_name = qtc.QFileInfo(filename).fileName()
+                    self.file_name_label.setText(f"{file_name}")
             except Exception as e:
                 qtw.QMessageBox.critical(self, f"Could not load file: {e}")
     
