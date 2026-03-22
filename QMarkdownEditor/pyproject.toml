@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "markdown-editor"
+version = "0.1.0"
+description = "A simple PyQt5-based markdown text editor."
+readme = "README.md"
+requires-python = ">=3.6"
+license = "MIT"  
+authors = [
+  { name = "Tomas C." }
+]
+keywords = ["markdown", "editor", "PyQt5", "text editor"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Environment :: X11 Applications :: Qt"
+]
+dependencies = [
+  "PyQt5>=5.15.0"
+]
+
+[project.gui-scripts]
+markdown_editor = "markdown_editor.__main__:main"
